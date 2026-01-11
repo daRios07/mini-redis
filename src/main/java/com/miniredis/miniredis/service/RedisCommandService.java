@@ -1,0 +1,62 @@
+package com.miniredis.miniredis.service;
+
+import com.miniredis.miniredis.command.CommandResult;
+import com.miniredis.miniredis.command.CommandParser;
+import com.miniredis.miniredis.domain.RedisDataStore;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+@Service
+public class RedisCommandService {
+
+    private final RedisDataStore dataStore;
+
+    public RedisCommandService(RedisDataStore dataStore) {
+        this.dataStore = dataStore;
+    }
+
+    public CommandResult execute(String commandString) {
+        try {
+            List<String> tokens = CommandParser.parse(commandString);
+            String command = tokens.get(0).toUpperCase();
+
+            return switch (command) {
+                case "SET" -> executeSet(tokens);
+                default -> new CommandResult.ErrorResult("ERR unknown command '" + command + "'");
+            };
+        } catch (IllegalArgumentException e) {
+            return new CommandResult.ErrorResult(e.getMessage());
+        }
+    }
+
+
+    private CommandResult executeSet(List<String> tokens) {
+        if (tokens.size() < 3) {
+            return new CommandResult.ErrorResult("ERR wrong number of arguments for 'SET' command");
+        }
+
+        String key = tokens.get(1);
+        String value = tokens.get(2);
+
+        CommandParser.validateKeyOrValue(key, "key");
+        CommandParser.validateKeyOrValue(value, "value");
+
+        // Check for EX option
+        if (tokens.size() >= 5) {
+            if (tokens.get(3).equalsIgnoreCase("EX")) {
+                long seconds = CommandParser.parseLong(tokens.get(4));
+                if (seconds <= 0) {
+                    return new CommandResult.ErrorResult("ERR invalid expire time in 'SET' command");
+                }
+                dataStore.setWithExpiry(key, value, seconds);
+                return new CommandResult.Ok();
+            }
+        } else if (tokens.size() == 3) {
+            dataStore.set(key, value);
+            return new CommandResult.Ok();
+        }
+
+        return new CommandResult.ErrorResult("ERR syntax error");
+    }
+}
