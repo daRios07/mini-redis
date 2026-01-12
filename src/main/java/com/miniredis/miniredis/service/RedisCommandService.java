@@ -6,6 +6,7 @@ import com.miniredis.miniredis.domain.RedisDataStore;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class RedisCommandService {
@@ -23,6 +24,10 @@ public class RedisCommandService {
 
             return switch (command) {
                 case "SET" -> executeSet(tokens);
+                case "GET" -> executeGet(tokens);
+                case "DEL" -> executeDel(tokens);
+                case "DBSIZE" -> executeDbSize(tokens);
+                case "INCR" -> executeIncr(tokens);
                 default -> new CommandResult.ErrorResult("ERR unknown command '" + command + "'");
             };
         } catch (IllegalArgumentException e) {
@@ -59,4 +64,60 @@ public class RedisCommandService {
 
         return new CommandResult.ErrorResult("ERR syntax error");
     }
+
+    private CommandResult executeGet(List<String> tokens) {
+        if (tokens.size() != 2) {
+            return new CommandResult.ErrorResult("ERR wrong number of arguments for 'GET' command");
+        }
+
+        String key = tokens.get(1);
+        CommandParser.validateKeyOrValue(key, "key");
+
+        Optional<String> value = dataStore.get(key);
+        return value
+                .map(CommandResult.StringResult::new)
+                .map(r -> (CommandResult) r)
+                .orElse(new CommandResult.NilResult());
+    }
+
+
+    private CommandResult executeDel(List<String> tokens) {
+        if (tokens.size() != 2) {
+            return new CommandResult.ErrorResult("ERR wrong number of arguments for 'DEL' command");
+        }
+
+        String key = tokens.get(1);
+        CommandParser.validateKeyOrValue(key, "key");
+
+        boolean deleted = dataStore.delete(key);
+        return new CommandResult.IntegerResult(deleted ? 1 : 0);
+    }
+
+    private CommandResult executeDbSize(List<String> tokens) {
+        if (tokens.size() != 1) {
+            return new CommandResult.ErrorResult("ERR wrong number of arguments for 'DBSIZE' command");
+        }
+
+        return new CommandResult.IntegerResult(dataStore.dbSize());
+    }
+
+    /**
+     * INCR key
+     */
+    private CommandResult executeIncr(List<String> tokens) {
+        if (tokens.size() != 2) {
+            return new CommandResult.ErrorResult("ERR wrong number of arguments for 'INCR' command");
+        }
+
+        String key = tokens.get(1);
+        CommandParser.validateKeyOrValue(key, "key");
+
+        try {
+            long newValue = dataStore.incr(key);
+            return new CommandResult.IntegerResult(newValue);
+        } catch (IllegalArgumentException e) {
+            return new CommandResult.ErrorResult(e.getMessage());
+        }
+    }
+
 }

@@ -100,6 +100,57 @@ public class RedisDataStore {
         }
     }
 
+    public boolean delete(String key) {
+        var lock = getLock(key).writeLock();
+        lock.lock();
+        try {
+            RedisValue removed = store.remove(key);
+            if (removed != null) {
+                keyLocks.remove(key);
+                return true;
+            }
+            return false;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public int dbSize() {
+        // Clean expired keys first for accurate count
+        cleanupExpiredKeys();
+        return store.size();
+    }
+
+
+    public long incr(String key) {
+        var lock = getLock(key).writeLock();
+        lock.lock();
+        try {
+            RedisValue value = store.get(key);
+            long currentValue = 0;
+
+            if (value != null) {
+                if (value.isExpired()) {
+                    store.remove(key);
+                } else if (value instanceof RedisValue.StringValue sv) {
+                    try {
+                        currentValue = Long.parseLong(sv.value());
+                    } catch (NumberFormatException e) {
+                        throw new IllegalArgumentException("ERR value is not an integer or out of range");
+                    }
+                } else {
+                    throw new IllegalArgumentException("WRONGTYPE Operation against a key holding the wrong kind of value");
+                }
+            }
+
+            long newValue = currentValue + 1;
+            store.put(key, new RedisValue.StringValue(String.valueOf(newValue)));
+            return newValue;
+        } finally {
+            lock.unlock();
+        }
+    }
+
     /**
      * Clean up expired keys
      */

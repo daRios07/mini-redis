@@ -61,4 +61,53 @@ class RedisDataStoreTest {
 
         assertTrue(dataStore.get("key1").isEmpty());
     }
+
+    @Test
+    @DisplayName("DEL should remove existing key and return true")
+    void deleteExisting() {
+        dataStore.set("key1", "value1");
+        assertTrue(dataStore.delete("key1"));
+        assertTrue(dataStore.get("key1").isEmpty());
+    }
+
+    @Test
+    @DisplayName("DEL on non-existent key should return false")
+    void deleteNonExistent() {
+        assertFalse(dataStore.delete("nonexistent"));
+    }
+
+    @Test
+    @DisplayName("DBSIZE should return correct count")
+    void dbSize() {
+        assertEquals(0, dataStore.dbSize());
+
+        dataStore.set("key1", "value1");
+        assertEquals(1, dataStore.dbSize());
+
+        dataStore.set("key2", "value2");
+        assertEquals(2, dataStore.dbSize());
+
+        dataStore.delete("key1");
+        assertEquals(1, dataStore.dbSize());
+    }
+
+    @Test
+    @DisplayName("INCR on non-existent key should set to 1")
+    void incrNonExistent() {
+        assertEquals(1, dataStore.incr("counter"));
+    }
+
+    @Test
+    @DisplayName("INCR should increment existing numeric value")
+    void incrExisting() {
+        dataStore.set("counter", "10");
+        assertEquals(11, dataStore.incr("counter"));
+    }
+
+    @Test
+    @DisplayName("INCR on non-numeric value should throw exception")
+    void incrNonNumeric() {
+        dataStore.set("key1", "notanumber");
+        assertThrows(IllegalArgumentException.class, () -> dataStore.incr("key1"));
+    }
 }
