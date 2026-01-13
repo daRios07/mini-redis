@@ -24,7 +24,7 @@ public class RedisCliCommands {
         return result.toString();
     }
 
-    @ShellMethod(value = "SET key value [EX seconds]", key = "set")
+    @ShellMethod(value = "SET key value [EX seconds]", key = {"set", "SET"})
     public String set(
             @ShellOption(help = "The key") String key,
             @ShellOption(help = "The value") String value,
@@ -35,27 +35,27 @@ public class RedisCliCommands {
         return commandService.execute(command).toString();
     }
 
-    @ShellMethod(value = "GET key", key = "get")
+    @ShellMethod(value = "GET key", key = {"get", "GET"})
     public String get(@ShellOption(help = "The key to retrieve") String key) {
         return commandService.execute("GET " + key).toString();
     }
 
-    @ShellMethod(value = "DEL key", key = "del")
+    @ShellMethod(value = "DEL key", key = {"del", "DEL"})
     public String del(@ShellOption(help = "The key to delete") String key) {
         return commandService.execute("DEL " + key).toString();
     }
 
-    @ShellMethod(value = "DBSIZE - Get the number of keys", key = "dbsize")
+    @ShellMethod(value = "DBSIZE - Get the number of keys", key = {"dbsize", "DBSIZE"})
     public String dbsize() {
         return commandService.execute("DBSIZE").toString();
     }
 
-    @ShellMethod(value = "INCR key", key = "incr")
+    @ShellMethod(value = "INCR key", key = {"incr", "INCR"})
     public String incr(@ShellOption(help = "The key to increment") String key) {
         return commandService.execute("INCR " + key).toString();
     }
 
-    @ShellMethod(value = "ZADD key score member", key = "zadd")
+    @ShellMethod(value = "ZADD key score member", key = {"zadd", "ZADD"})
     public String zadd(
             @ShellOption(help = "The sorted set key") String key,
             @ShellOption(help = "The score") double score,
@@ -63,19 +63,19 @@ public class RedisCliCommands {
         return commandService.execute(String.format("ZADD %s %f %s", key, score, member)).toString();
     }
 
-    @ShellMethod(value = "ZCARD key", key = "zcard")
+    @ShellMethod(value = "ZCARD key", key = {"zcard", "ZCARD"})
     public String zcard(@ShellOption(help = "The sorted set key") String key) {
         return commandService.execute("ZCARD " + key).toString();
     }
 
-    @ShellMethod(value = "ZRANK key member", key = "zrank")
+    @ShellMethod(value = "ZRANK key member", key = {"zrank", "ZRANK"})
     public String zrank(
             @ShellOption(help = "The sorted set key") String key,
             @ShellOption(help = "The member") String member) {
         return commandService.execute("ZRANK " + key + " " + member).toString();
     }
 
-    @ShellMethod(value = "ZRANGE key start stop", key = "zrange")
+    @ShellMethod(value = "ZRANGE key start stop", key = {"zrange", "ZRANGE"})
     public String zrange(
             @ShellOption(help = "The sorted set key") String key,
             @ShellOption(help = "Start index") int start,
@@ -83,13 +83,13 @@ public class RedisCliCommands {
         return commandService.execute(String.format("ZRANGE %s %d %d", key, start, stop)).toString();
     }
 
-    @ShellMethod(value = "FLUSHALL - Clear all data", key = "flushall")
+    @ShellMethod(value = "FLUSHALL - Clear all data", key = {"flushall", "FLUSHALL"})
     public String flushall() {
         commandService.flushAll();
         return "OK";
     }
 
-    @ShellMethod(value = "Close application", key = {"quit", "exit"})
+    @ShellMethod(value = "Close application", key = {"quit","QUIT","exit", "EXIT"})
     public void exit() {
         System.exit(0);
     }

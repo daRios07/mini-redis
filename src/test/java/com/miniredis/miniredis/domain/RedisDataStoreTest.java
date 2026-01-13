@@ -7,6 +7,11 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -220,6 +225,156 @@ class RedisDataStoreTest {
         dataStore.zadd("myset", 3.0, "three");
 
         assertEquals(List.of("one", "uno","two","three"), dataStore.zrange("myset", 0, -1));
+    }
+
+    // ============== Concurrent Access Tests ==============
+
+    @Test
+    @DisplayName("Concurrent SET operations should be atomic")
+    void concurrentSet() throws InterruptedException {
+        int threadCount = 10;
+        int operationsPerThread = 100;
+        ExecutorService executor = Executors.newFixedThreadPool(threadCount);
+        CountDownLatch latch = new CountDownLatch(threadCount);
+
+        for (int i = 0; i < threadCount; i++) {
+            final int threadId = i;
+            executor.submit(() -> {
+                try {
+                    for (int j = 0; j < operationsPerThread; j++) {
+                        dataStore.set("key" + threadId + "_" + j, "value" + j);
+                    }
+                } finally {
+                    latch.countDown();
+                }
+            });
+        }
+
+        latch.await(30, TimeUnit.SECONDS);
+        executor.shutdown();
+
+        assertEquals(threadCount * operationsPerThread, dataStore.dbSize());
+    }
+
+    @Test
+    @DisplayName("Concurrent INCR operations should be atomic")
+    void concurrentIncr() throws InterruptedException {
+        int threadCount = 10;
+        int incrementsPerThread = 100;
+        ExecutorService executor = Executors.newFixedThreadPool(threadCount);
+        CountDownLatch latch = new CountDownLatch(threadCount);
+
+        for (int i = 0; i < threadCount; i++) {
+            executor.submit(() -> {
+                try {
+                    for (int j = 0; j < incrementsPerThread; j++) {
+                        dataStore.incr("counter");
+                    }
+                } finally {
+                    latch.countDown();
+                }
+            });
+        }
+
+        latch.await(30, TimeUnit.SECONDS);
+        executor.shutdown();
+
+        assertEquals(threadCount * incrementsPerThread,
+                Long.parseLong(dataStore.get("counter").orElseThrow()));
+    }
+
+    @Test
+    @DisplayName("Concurrent ZADD operations should be atomic")
+    void concurrentZadd() throws InterruptedException {
+        int threadCount = 10;
+        int addsPerThread = 100;
+        ExecutorService executor = Executors.newFixedThreadPool(threadCount);
+        CountDownLatch latch = new CountDownLatch(threadCount);
+        AtomicInteger totalAdded = new AtomicInteger(0);
+
+        for (int i = 0; i < threadCount; i++) {
+            final int threadId = i;
+            executor.submit(() -> {
+                try {
+                    for (int j = 0; j < addsPerThread; j++) {
+                        int result = dataStore.zadd("myset",
+                                threadId * 1000 + j,
+                                "member_" + threadId + "_" + j);
+                        totalAdded.addAndGet(result);
+                    }
+                } finally {
+                    latch.countDown();
+                }
+            });
+        }
+
+        latch.await(30, TimeUnit.SECONDS);
+        executor.shutdown();
+
+        assertEquals(threadCount * addsPerThread, dataStore.zcard("myset"));
+        assertEquals(threadCount * addsPerThread, totalAdded.get());
+    }
+
+    @Test
+    @DisplayName("Mixed concurrent operations should be safe")
+    void concurrentMixedOperations() throws InterruptedException {
+        int threadCount = 8;
+        ExecutorService executor = Executors.newFixedThreadPool(threadCount);
+        CountDownLatch latch = new CountDownLatch(threadCount);
+
+        // Writers
+        for (int i = 0; i < 4; i++) {
+            final int threadId = i;
+            executor.submit(() -> {
+                try {
+                    for (int j = 0; j < 50; j++) {
+                        dataStore.set("shared_key", "value_" + threadId + "_" + j);
+                        dataStore.incr("counter");
+                        dataStore.zadd("zset", threadId * 100 + j, "m" + threadId + "_" + j);
+                    }
+                } finally {
+                    latch.countDown();
+                }
+            });
+        }
+
+        // Readers
+        for (int i = 0; i < 4; i++) {
+            executor.submit(() -> {
+                try {
+                    for (int j = 0; j < 50; j++) {
+                        dataStore.get("shared_key");
+                        dataStore.dbSize();
+                        dataStore.zcard("zset");
+                        dataStore.zrange("zset", 0, 10);
+                    }
+                } finally {
+                    latch.countDown();
+                }
+            });
+        }
+
+        latch.await(30, TimeUnit.SECONDS);
+        executor.shutdown();
+
+        // Verify counter has expected value
+        assertEquals(200, Long.parseLong(dataStore.get("counter").orElseThrow()));
+    }
+
+    // ============== FlushAll Tests ==============
+
+    @Test
+    @DisplayName("flushAll should clear all data")
+    void flushAll() {
+        dataStore.set("key1", "value1");
+        dataStore.set("key2", "value2");
+        dataStore.zadd("zset", 1.0, "member");
+
+        dataStore.flushAll();
+
+        assertEquals(0, dataStore.dbSize());
+        assertTrue(dataStore.get("key1").isEmpty());
+        assertEquals(0, dataStore.zcard("zset"));
     }
 
 }

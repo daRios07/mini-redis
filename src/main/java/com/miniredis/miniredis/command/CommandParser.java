@@ -13,11 +13,13 @@ public class CommandParser {
             throw new IllegalArgumentException("ERR empty command");
         }
 
+        String normalized = commandString.replace("%20", " ");
+
         List<String> tokens = new ArrayList<>();
         StringBuilder current = new StringBuilder();
         boolean inQuotes = false;
 
-        for (char c : commandString.trim().toCharArray()) {
+        for (char c : normalized.trim().toCharArray()) {
             if (c == '"') {
                 inQuotes = !inQuotes;
             } else if (c == ' ' && !inQuotes) {
