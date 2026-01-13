@@ -3,6 +3,7 @@ package com.miniredis.miniredis.domain;
 import org.springframework.stereotype.Component;
 
 
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
@@ -151,6 +152,97 @@ public class RedisDataStore {
         }
     }
 
+
+    /**
+     * ZADD key score member
+     * Adds a member with the specified score to the sorted set.
+     * @return 1 if the member was added, 0 if it was updated
+     */
+    public int zadd(String key, double score, String member) {
+        var lock = getLock(key).writeLock();
+        lock.lock();
+        try {
+            RedisValue value = store.get(key);
+            RedisValue.SortedSetValue sortedSet;
+
+            if (value == null) {
+                sortedSet = new RedisValue.SortedSetValue();
+                store.put(key, sortedSet);
+            } else if (value instanceof RedisValue.SortedSetValue ss) {
+                sortedSet = ss;
+            } else {
+                throw new IllegalArgumentException("WRONGTYPE Operation against a key holding the wrong kind of value");
+            }
+
+            return sortedSet.addMember(member, score) ? 1 : 0;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * ZCARD key
+     * @return the number of members in the sorted set, or 0 if key doesn't exist
+     */
+    public int zcard(String key) {
+        var lock = getLock(key).readLock();
+        lock.lock();
+        try {
+            RedisValue value = store.get(key);
+            if (value == null) {
+                return 0;
+            }
+            if (value instanceof RedisValue.SortedSetValue ss) {
+                return ss.cardinality();
+            }
+            throw new IllegalArgumentException("WRONGTYPE Operation against a key holding the wrong kind of value");
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * ZRANK key member
+     * @return Optional containing the rank of the member, or empty if member doesn't exist
+     */
+    public Optional<Integer> zrank(String key, String member) {
+        var lock = getLock(key).readLock();
+        lock.lock();
+        try {
+            RedisValue value = store.get(key);
+            if (value == null) {
+                return Optional.empty();
+            }
+            if (value instanceof RedisValue.SortedSetValue ss) {
+                return ss.getRank(member);
+            }
+            throw new IllegalArgumentException("WRONGTYPE Operation against a key holding the wrong kind of value");
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    /**
+     * ZRANGE key start stop
+     * @return list of members in the specified range
+     */
+    public List<String> zrange(String key, int start, int stop) {
+        var lock = getLock(key).readLock();
+        lock.lock();
+        try {
+            RedisValue value = store.get(key);
+            if (value == null) {
+                return List.of();
+            }
+            if (value instanceof RedisValue.SortedSetValue ss) {
+                return ss.getRange(start, stop);
+            }
+            throw new IllegalArgumentException("WRONGTYPE Operation against a key holding the wrong kind of value");
+        } finally {
+            lock.unlock();
+        }
+    }
+
     /**
      * Clean up expired keys
      */
@@ -164,9 +256,7 @@ public class RedisDataStore {
         });
     }
 
-    /**
-     * Clear all data (for testing purposes)
-     */
+
     public void flushAll() {
         store.clear();
         keyLocks.clear();

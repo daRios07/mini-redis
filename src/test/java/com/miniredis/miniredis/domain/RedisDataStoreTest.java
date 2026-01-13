@@ -5,6 +5,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -110,4 +111,115 @@ class RedisDataStoreTest {
         dataStore.set("key1", "notanumber");
         assertThrows(IllegalArgumentException.class, () -> dataStore.incr("key1"));
     }
+
+    // ============== ZADD Tests ==============
+
+    @Test
+    @DisplayName("ZADD should add new member and return 1")
+    void zaddNewMember() {
+        assertEquals(1, dataStore.zadd("myset", 1.0, "member1"));
+    }
+
+    @Test
+    @DisplayName("ZADD should update existing member and return 0")
+    void zaddUpdateMember() {
+        dataStore.zadd("myset", 1.0, "member1");
+        assertEquals(0, dataStore.zadd("myset", 2.0, "member1"));
+    }
+
+    @Test
+    @DisplayName("ZADD on string key should throw exception")
+    void zaddOnStringKey() {
+        dataStore.set("stringkey", "value");
+        assertThrows(IllegalArgumentException.class,
+                () -> dataStore.zadd("stringkey", 1.0, "member"));
+    }
+
+    // ============== ZCARD Tests ==============
+
+    @Test
+    @DisplayName("ZCARD should return cardinality of sorted set")
+    void zcard() {
+        assertEquals(0, dataStore.zcard("myset"));
+
+        dataStore.zadd("myset", 1.0, "member1");
+        assertEquals(1, dataStore.zcard("myset"));
+
+        dataStore.zadd("myset", 2.0, "member2");
+        dataStore.zadd("myset", 3.0, "member3");
+        assertEquals(3, dataStore.zcard("myset"));
+    }
+
+    // ============== ZRANK Tests ==============
+
+    @Test
+    @DisplayName("ZRANK should return rank by score order")
+    void zrank() {
+        dataStore.zadd("myset", 3.0, "three");
+        dataStore.zadd("myset", 1.0, "one");
+        dataStore.zadd("myset", 2.0, "two");
+
+        assertEquals(0, dataStore.zrank("myset", "one").orElseThrow());
+        assertEquals(1, dataStore.zrank("myset", "two").orElseThrow());
+        assertEquals(2, dataStore.zrank("myset", "three").orElseThrow());
+    }
+
+    @Test
+    @DisplayName("ZRANK should return empty for non-existent member")
+    void zrankNonExistent() {
+        dataStore.zadd("myset", 1.0, "member1");
+        assertTrue(dataStore.zrank("myset", "nonexistent").isEmpty());
+    }
+
+    // ============== ZRANGE Tests ==============
+
+    @Test
+    @DisplayName("ZRANGE should return members in score order")
+    void zrange() {
+        dataStore.zadd("myset", 3.0, "three");
+        dataStore.zadd("myset", 1.0, "one");
+        dataStore.zadd("myset", 2.0, "two");
+
+        List<String> result = dataStore.zrange("myset", 0, -1);
+        assertEquals(List.of("one", "two", "three"), result);
+    }
+
+    @Test
+    @DisplayName("ZRANGE with partial range")
+    void zrangePartial() {
+        dataStore.zadd("myset", 1.0, "a");
+        dataStore.zadd("myset", 2.0, "b");
+        dataStore.zadd("myset", 3.0, "c");
+        dataStore.zadd("myset", 4.0, "d");
+
+        assertEquals(List.of("b", "c"), dataStore.zrange("myset", 1, 2));
+    }
+
+    @Test
+    @DisplayName("ZRANGE with negative indices")
+    void zrangeNegativeIndices() {
+        dataStore.zadd("myset", 1.0, "a");
+        dataStore.zadd("myset", 2.0, "b");
+        dataStore.zadd("myset", 3.0, "c");
+
+        assertEquals(List.of("b", "c"), dataStore.zrange("myset", -2, -1));
+    }
+
+    @Test
+    @DisplayName("ZRANGE on empty set should return empty list")
+    void zrangeEmpty() {
+        assertEquals(List.of(), dataStore.zrange("myset", 0, -1));
+    }
+
+    @Test
+    @DisplayName("ZRANGE with redis Page Test")
+    void redisPageTest() {
+        dataStore.zadd("myset", 1.0, "one");
+        dataStore.zadd("myset", 1.0, "uno");
+        dataStore.zadd("myset", 2.0, "two");
+        dataStore.zadd("myset", 3.0, "three");
+
+        assertEquals(List.of("one", "uno","two","three"), dataStore.zrange("myset", 0, -1));
+    }
+
 }

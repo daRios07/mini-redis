@@ -28,6 +28,10 @@ public class RedisCommandService {
                 case "DEL" -> executeDel(tokens);
                 case "DBSIZE" -> executeDbSize(tokens);
                 case "INCR" -> executeIncr(tokens);
+                case "ZADD" -> executeZadd(tokens);
+                case "ZCARD" -> executeZcard(tokens);
+                case "ZRANK" -> executeZrank(tokens);
+                case "ZRANGE" -> executeZrange(tokens);
                 default -> new CommandResult.ErrorResult("ERR unknown command '" + command + "'");
             };
         } catch (IllegalArgumentException e) {
@@ -119,5 +123,99 @@ public class RedisCommandService {
             return new CommandResult.ErrorResult(e.getMessage());
         }
     }
+
+    /**
+     * ZADD key score member
+     */
+    private CommandResult executeZadd(List<String> tokens) {
+        if (tokens.size() != 4) {
+            return new CommandResult.ErrorResult("ERR wrong number of arguments for 'ZADD' command");
+        }
+
+        String key = tokens.get(1);
+        double score = CommandParser.parseScore(tokens.get(2));
+        String member = tokens.get(3);
+
+        CommandParser.validateKeyOrValue(key, "key");
+        CommandParser.validateKeyOrValue(member, "member");
+
+        try {
+            int added = dataStore.zadd(key, score, member);
+            return new CommandResult.IntegerResult(added);
+        } catch (IllegalArgumentException e) {
+            return new CommandResult.ErrorResult(e.getMessage());
+        }
+    }
+
+    /**
+     * ZCARD key
+     */
+    private CommandResult executeZcard(List<String> tokens) {
+        if (tokens.size() != 2) {
+            return new CommandResult.ErrorResult("ERR wrong number of arguments for 'ZCARD' command");
+        }
+
+        String key = tokens.get(1);
+        CommandParser.validateKeyOrValue(key, "key");
+
+        try {
+            int cardinality = dataStore.zcard(key);
+            return new CommandResult.IntegerResult(cardinality);
+        } catch (IllegalArgumentException e) {
+            return new CommandResult.ErrorResult(e.getMessage());
+        }
+    }
+
+    /**
+     * ZRANK key member
+     */
+    private CommandResult executeZrank(List<String> tokens) {
+        if (tokens.size() != 3) {
+            return new CommandResult.ErrorResult("ERR wrong number of arguments for 'ZRANK' command");
+        }
+
+        String key = tokens.get(1);
+        String member = tokens.get(2);
+
+        CommandParser.validateKeyOrValue(key, "key");
+        CommandParser.validateKeyOrValue(member, "member");
+
+        try {
+            Optional<Integer> rank = dataStore.zrank(key, member);
+            return rank
+                    .map(r -> (CommandResult) new CommandResult.IntegerResult(r))
+                    .orElse(new CommandResult.NilResult());
+        } catch (IllegalArgumentException e) {
+            return new CommandResult.ErrorResult(e.getMessage());
+        }
+    }
+
+    /**
+     * ZRANGE key start stop
+     */
+    private CommandResult executeZrange(List<String> tokens) {
+        if (tokens.size() != 4) {
+            return new CommandResult.ErrorResult("ERR wrong number of arguments for 'ZRANGE' command");
+        }
+
+        String key = tokens.get(1);
+        int start = CommandParser.parseInt(tokens.get(2));
+        int stop = CommandParser.parseInt(tokens.get(3));
+
+        CommandParser.validateKeyOrValue(key, "key");
+
+        try {
+            List<String> members = dataStore.zrange(key, start, stop);
+            return new CommandResult.ListResult(members);
+        } catch (IllegalArgumentException e) {
+            return new CommandResult.ErrorResult(e.getMessage());
+        }
+    }
+
+    public void flushAll() {
+        dataStore.flushAll();
+    }
+
+
 
 }

@@ -59,4 +59,20 @@ public class CommandParser {
         }
     }
 
+    public static double parseScore(String scoreStr) {
+        try {
+            return Double.parseDouble(scoreStr);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("ERR value is not a valid float");
+        }
+    }
+
+    public static int parseInt(String intStr) {
+        try {
+            return Integer.parseInt(intStr);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("ERR value is not an integer or out of range");
+        }
+    }
+
 }
