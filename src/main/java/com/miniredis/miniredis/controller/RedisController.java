@@ -76,7 +76,7 @@ public class RedisController {
     /**
      * DBSIZE endpoint
      */
-    @GetMapping(value = "/db/size", produces = MediaType.TEXT_PLAIN_VALUE)
+    @GetMapping(value = "/dbsize", produces = MediaType.TEXT_PLAIN_VALUE)
     public ResponseEntity<String> dbSize() {
         CommandResult result = commandService.execute("DBSIZE");
         return formatResponse(result);

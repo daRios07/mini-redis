@@ -1,0 +1,504 @@
+{
+	"info": {
+		"_postman_id": "12647d46-ad59-4563-b5c6-d359702ef718",
+		"name": "MiniRedis - RedisController",
+		"description": "Postman collection for RedisController endpoints (text/plain).",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "2706526"
+	},
+	"item": [
+		{
+			"name": "Command - Execute via query param",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "text/plain"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/?cmd={{cmd}}",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						""
+					],
+					"query": [
+						{
+							"key": "cmd",
+							"value": "{{cmd}}"
+						}
+					]
+				},
+				"description": "GET /?cmd=SET%20mykey%20myvalue"
+			},
+			"response": [
+				{
+					"name": "cmd set",
+					"originalRequest": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "text/plain"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8080/?cmd=SET mykey myvalue",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								""
+							],
+							"query": [
+								{
+									"key": "cmd",
+									"value": "SET mykey myvalue"
+								}
+							]
+						}
+					},
+					"_postman_previewlanguage": "",
+					"header": [],
+					"cookie": [
+						{
+							"expires": "Invalid Date",
+							"domain": "",
+							"path": ""
+						}
+					],
+					"body": ""
+				},
+				{
+					"name": "cmd get",
+					"originalRequest": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "text/plain"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/?cmd=GET%20mykey",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								""
+							],
+							"query": [
+								{
+									"key": "cmd",
+									"value": "GET%20mykey"
+								}
+							]
+						}
+					},
+					"_postman_previewlanguage": null,
+					"header": null,
+					"cookie": [],
+					"body": null
+				}
+			]
+		},
+		{
+			"name": "Key - GET value",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "text/plain"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/{{key}}",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"{{key}}"
+					]
+				},
+				"description": "GET /{key}"
+			},
+			"response": []
+		},
+		{
+			"name": "Key - PUT set value",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "text/plain"
+					},
+					{
+						"key": "Accept",
+						"value": "text/plain"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{{value}}",
+					"options": {
+						"raw": {
+							"language": "text"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/{{key}}",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"{{key}}"
+					]
+				},
+				"description": "PUT /{key} with text/plain body"
+			},
+			"response": []
+		},
+		{
+			"name": "Key - PUT set value with expiry (ex seconds)",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "text/plain"
+					},
+					{
+						"key": "Accept",
+						"value": "text/plain"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{{value}}",
+					"options": {
+						"raw": {
+							"language": "text"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/mykey2?ex={{ex}}",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"mykey2"
+					],
+					"query": [
+						{
+							"key": "ex",
+							"value": "{{ex}}"
+						}
+					]
+				},
+				"description": "PUT /{key}?ex=60 with text/plain body"
+			},
+			"response": []
+		},
+		{
+			"name": "Key - DELETE",
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "text/plain"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/{{key}}",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"{{key}}"
+					]
+				},
+				"description": "DELETE /{key}"
+			},
+			"response": []
+		},
+		{
+			"name": "DB - Size",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "text/plain"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/dbsize",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"dbsize"
+					]
+				},
+				"description": "GET /db/size"
+			},
+			"response": []
+		},
+		{
+			"name": "Key - INCR",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "text/plain"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/{{key}}/incr",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"{{key}}",
+						"incr"
+					]
+				},
+				"description": "POST /{key}/incr"
+			},
+			"response": []
+		},
+		{
+			"name": "Sorted Set - ZADD",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "text/plain"
+					},
+					{
+						"key": "Accept",
+						"value": "text/plain"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{{scoreAndMember}}",
+					"options": {
+						"raw": {
+							"language": "text"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/key44/zadd",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"key44",
+						"zadd"
+					]
+				},
+				"description": "POST /{key}/zadd with body: \"1.0 member1\""
+			},
+			"response": [
+				{
+					"name": "Sorted Set - ZADD",
+					"originalRequest": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "text/plain"
+							},
+							{
+								"key": "Accept",
+								"value": "text/plain"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "1.0 member1",
+							"options": {
+								"raw": {
+									"language": "text"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:8080/key55/zadd",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "8080",
+							"path": [
+								"key55",
+								"zadd"
+							]
+						}
+					},
+					"_postman_previewlanguage": "",
+					"header": [],
+					"cookie": [
+						{
+							"expires": "Invalid Date",
+							"domain": "",
+							"path": ""
+						}
+					],
+					"body": ""
+				}
+			]
+		},
+		{
+			"name": "Sorted Set - ZCARD",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "text/plain"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/key44/zcard",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"key44",
+						"zcard"
+					]
+				},
+				"description": "GET /{key}/zcard"
+			},
+			"response": []
+		},
+		{
+			"name": "Sorted Set - ZRANK member",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "text/plain"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/key44/zrank/member1",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"key44",
+						"zrank",
+						"member1"
+					]
+				},
+				"description": "GET /{key}/zrank/{member}"
+			},
+			"response": []
+		},
+		{
+			"name": "Sorted Set - ZRANGE (start, stop)",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "text/plain"
+					}
+				],
+				"url": {
+					"raw": "{{baseUrl}}/key55/zrange?start={{start}}&stop={{stop}}",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"key55",
+						"zrange"
+					],
+					"query": [
+						{
+							"key": "start",
+							"value": "{{start}}"
+						},
+						{
+							"key": "stop",
+							"value": "{{stop}}"
+						}
+					]
+				},
+				"description": "GET /{key}/zrange?start=0&stop=10"
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": []
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": []
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080"
+		},
+		{
+			"key": "cmd",
+			"value": "SET mykey myvalue"
+		},
+		{
+			"key": "key",
+			"value": "mykey"
+		},
+		{
+			"key": "value",
+			"value": "myvalue"
+		},
+		{
+			"key": "ex",
+			"value": "60"
+		},
+		{
+			"key": "scoreAndMember",
+			"value": "1.0 member1"
+		},
+		{
+			"key": "member",
+			"value": "member1"
+		},
+		{
+			"key": "start",
+			"value": "0"
+		},
+		{
+			"key": "stop",
+			"value": "10"
+		}
+	]
+}

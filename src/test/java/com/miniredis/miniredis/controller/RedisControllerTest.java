@@ -175,7 +175,7 @@ class RedisControllerTest {
         restTemplate.getForEntity(baseUrl + "/?cmd=SET%20key2%20val2", String.class);
 
         ResponseEntity<String> response = restTemplate.getForEntity(
-                baseUrl + "/db/size", String.class);
+                baseUrl + "/dbsize", String.class);
         assertEquals("2", response.getBody());
     }
 
@@ -214,7 +214,7 @@ class RedisControllerTest {
 
         // Verify all keys were set
         ResponseEntity<String> dbsizeResponse = restTemplate.getForEntity(
-                baseUrl + "/db/size", String.class);
+                baseUrl + "/dbsize", String.class);
         assertEquals(String.valueOf(threadCount * requestsPerThread), dbsizeResponse.getBody());
     }
 
